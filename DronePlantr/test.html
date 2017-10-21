@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.4.1.js"></script>
+    <script type="text/javascript">
+
+        var pubnubDemo = new PubNub({
+            publishKey: 'pub-c-ca2ac9cc-ce64-433e-8024-5bf63969c407',
+            subscribeKey: 'sub-c-c64b6dd4-b666-11e7-a150-5e56acef67bd'
+        });
+
+        //try doing it with pnchannel too!
+        pubnubDemo.addListener({
+            message: function(message){
+                console.log(message)
+            }
+        });
+        //message is an alias for callback!
+        pubnubDemo.subscribe({
+            channels: ['map-channel']
+        });
+        function my_call_back_func(msg)
+        {
+            Console.log(msg);
+        }
+//        function subscr() {
+//            pubnubDemo.subscribe({
+//                channels: ['particle']
+//            });
+//        }
+//
+//        setInterval(function() {
+//            subscr();
+//        },1000);
+
+
+    </script>
+
+</head>
+
+
+<body>
+Loaded
+</body>
+</html>

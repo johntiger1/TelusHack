@@ -1,0 +1,231 @@
+pip:
+
+https://dev.to/el_joft/installing-pip-on-windows
+
+
+virtualenv: Tenv
+
+Tenv\Scripts\activate
+
+This was most likely why:
+
+C:\Users\johnp\Desktop\git_stuff\test_git>where ssh-keygen
+C:\cygwin64\bin\ssh-keygen.exe
+C:\Program Files (x86)\OpenSSH\bin\ssh-keygen.exe
+https://serene-forest.herokuapp.com/
+
+
+ C:\Users\johnp\.virtualenvs\johnp-w5OFnspb
+
+
+ Deleting from path:
+ C:\Users\johnp\AppData\Local\Programs\Python\Python35-32\Scripts\
+ C:\Users\johnp\AppData\Local\Programs\Python\Python35-32\
+
+ where and which are very nice on Windows
+
+ most likely: heroku local web -f Procfile 
+ windows
+
+
+Actual:
+heroku local web -f Procfile.windows
+
+
+useful
+https://dev.to/el_joft/installing-pip-on-windows
+
+heroku running migrations vs locally doing the migration
+Do things in the pip shell
+
+hence to recap:
+we just need to add fields
+
+For some reason: need to run 2 sets of 2--python and then the heroku run python...
+
+
+For adding/updating the model on the site:
+python
+git adding
+heroku push
+
+So it's probably pretty easy to setup the button clicking (python augmented html)
+But, to get it into JSOn form...
+
+Dependency management:
+pipfile=> specifies the app dependencies. So, just doing pipenv install won't work oddly enough, need to add the dependency in pipfile, and then it will be OK (heroku will be able to build)
+overall, now I should be able to mimic some rest functionality
+
+
+General storage for all the data, and then be able to do stuff with it
+also, request.method seems to work!...
+
+wow the runserver does not need to be rebooted on code change!
+
+Backend is pretty OK, just wanted the rest API, and the ability to get data and stuff back
+Now, want an agnular frontend which grabs json data and displays it
+(we want: rows to JSON) (optional db for long term storage)
+html5 geolocation
+
+Backend logic: update the angular or something like that
+map: should render location, and other stuff (for example temperature and other stuff when you click on it)
+think: about location
+we can either use OpenData, or just go on with our regular server backend
+frontend only web client that anyone can control!
+what would really be cool is if the drone location could be overlaid in angular in realtime
+else, it would still be OK to just have aggregate data points
+
+dynamically add a point onto the map and go forth (for now: every x seconds once it gets)
+
+
+https://developers.google.com/maps/documentation/javascript/markers#add 7
+
+doesn't need angularjs just yet, but can be added...
+
+(this but drop the marker after it moves!)
+
+
+JS key:
+AIzaSyAFZn36TEd4dLvyB1uAV4gIjRMjVr6FOJM
+
+Possibly need a CLEAR function--so we can get rid of points once they are on the map..
+coudl also just change it so that only on counter > %4 we do it...
+(if statement inside the window...)
+
+
+
+pubnub -- create a new one, and add listeners
+these listeners will be called whenever the subscribe returns...
+presumably though you don't need to keep calling it, it will just auto call it --check if subscribe has a callback
+we AUTO created the publish channel earlier, as well as what to publish!
+
+subscribe to different channels, with different listeners and so forth!
+
+best: just separate out the logic:
+just receive the message (as soon as it comes from pubnub), then if appropriate, redraw.
+
+
+
+old code:
+
+<html>
+<head>
+  <title>Google Maps Example</title>
+  <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.4.1.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" />
+</head>
+<body>
+<div class="container">
+  <h1>Drone Plantr</h1>
+  <div id="map-canvas" style="width:600px;height:400px"></div>
+</div>
+
+<script>
+  window.lat = 43.6532;
+  window.lng = -79.3832;
+  //Need to add callback later on
+  //      navigator.geolocation.getCurrentPosition(setLatLng);
+  //
+  //      function setLatLng(position)
+  //      {
+  //        window.lat = position.coords.latitude;
+  //        window.lng = position.coords.longitude;
+  //      }
+
+  global_cycle = 0;
+  global_array_markers = [];
+  var map;
+  var mark;
+  var lineCoords = [];
+
+  var initialize = function() {
+    map  = new google.maps.Map(document.getElementById('map-canvas'), {center:{lat:lat,lng:lng},zoom:17});
+    mark = new google.maps.Marker({position:{lat:lat, lng:lng}, map:map});
+    lineCoords.push(new google.maps.LatLng(window.lat, window.lng));
+  };
+
+  window.initialize = initialize;
+
+  var redraw = function(payload) {
+    console.log(payload);
+
+    if (global_cycle %4  ==0 && Math.random() > 0.4)
+    {
+      if (global_array_markers.length > 3){
+        console.log("array too long");
+        global_array_markers[0].setMap(null);
+        global_array_markers.pop();
+      }
+      var myLatlng = new google.maps.LatLng(window.lat , window.lng );
+      var marker = new google.maps.Marker({
+        position: myLatlng,
+        title:payload.message
+      });
+      global_array_markers.push(marker);
+      // var oldMark = jQuery.extend({}, mark);
+      // oldMark.setMap(map); //want to copy the marker
+
+      marker.setMap(map);
+    }
+
+    lat = payload.message.lat;
+    lng = payload.message.lng;
+
+    map.setCenter({lat:lat, lng:lng, alt:0});
+    mark.setPosition({lat:lat, lng:lng, alt:0});
+    lineCoords.push(new google.maps.LatLng(lat, lng));
+
+    var lineCoordinatesPath = new google.maps.Polyline({
+      path: lineCoords,
+      geodesic: true,
+      strokeColor: '#2E10FF'
+    });
+
+    lineCoordinatesPath.setMap(map);
+    global_cycle++;
+  };
+
+  var pnChannel = "particle"; //this must match the publishing channel
+
+//  var pubnub = new PubNub({
+//    publishKey: 'pub-c-c15dfd3d-9760-4b00-81d2-cf4f143e43c9',
+//    subscribeKey: 'sub-c-f67b89d4-b68a-11e7-b8f2-c6027b8a2e05'
+//  });
+
+  var pubnub = new PubNub({
+    publishKey: 'pub-c-ca2ac9cc-ce64-433e-8024-5bf63969c407',
+    subscribeKey: 'sub-c-c64b6dd4-b666-11e7-a150-5e56acef67bd'
+  });
+
+  var response_x =pubnub.subscribe({channels: [pnChannel]});
+  console.log(response_x );
+  pubnub.addListener({message:redraw});
+
+  var pnChannel_from_sensor = "sensor-channel";
+
+  var second_pubnub = new PubNub({
+    publishKey: 'pub-c-ca2ac9cc-ce64-433e-8024-5bf63969c407',
+    subscribeKey: 'sub-c-c64b6dd4-b666-11e7-a150-5e56acef67bd'
+  });
+  function getRandomNegPos()
+  {
+
+    return Math.random() >0.2 ? Math.random()/1000 : -Math.random()/1000;
+
+  }
+  setInterval(function() {
+    pubnub.publish({channel:pnChannel, message:{lat:window.lat + getRandomNegPos(), lng:window.lng + getRandomNegPos()}}
+
+    );
+  }, 3000);
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyAFZn36TEd4dLvyB1uAV4gIjRMjVr6FOJM&callback=initialize"></script>
+<script
+        src="https://code.jquery.com/jquery-3.2.1.min.js"
+        integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+</body>
+</html>
+
+we have ONE  listener per client (so not per channel), BUT we can have multiple clients! 

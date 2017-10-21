@@ -1,0 +1,108 @@
+
+<html>
+<head>
+  <title>Google Maps Example</title>
+  <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.4.1.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" />
+</head>
+<body>
+<div class="container">
+  <h1>Drone Plantr</h1>
+  <div id="map-canvas" style="width:600px;height:400px"></div>
+</div>
+
+<script>
+  window.lat = 43.6532;
+  window.lng = -79.3832;
+  //Need to add callback later on
+  //      navigator.geolocation.getCurrentPosition(setLatLng);
+  //
+  //      function setLatLng(position)
+  //      {
+  //        window.lat = position.coords.latitude;
+  //        window.lng = position.coords.longitude;
+  //      }
+
+  global_cycle = 0;
+  global_array_markers = [];
+  var map;
+  var mark;
+  var lineCoords = [];
+
+  var initialize = function() {
+    map  = new google.maps.Map(document.getElementById('map-canvas'), {center:{lat:lat,lng:lng},zoom:17});
+    mark = new google.maps.Marker({position:{lat:lat, lng:lng}, map:map});
+    lineCoords.push(new google.maps.LatLng(window.lat, window.lng));
+  };
+
+  window.initialize = initialize;
+
+  var redraw = function(payload) {
+    console.log(global_cycle);
+    console.log("This is the payload received" + payload.message);
+    payload.message.lat = window.lat + getRandomNegPos();
+    payload.message.lng = window.lng + getRandomNegPos();
+    if (global_cycle %4  ==0 && Math.random() > 0.4)
+    {
+      if (global_array_markers.length > 3){
+        console.log("array too long");
+        global_array_markers[0].setMap(null);
+        global_array_markers.pop();
+      }
+      var myLatlng = new google.maps.LatLng(window.lat , window.lng );
+      var marker = new google.maps.Marker({
+        position: myLatlng,
+        title:payload.message
+      });
+      global_array_markers.push(marker);
+
+      marker.setMap(map);
+    }
+
+    lat = payload.message.lat;
+    lng = payload.message.lng;
+
+    map.setCenter({lat:lat, lng:lng, alt:0});
+    mark.setPosition({lat:lat, lng:lng, alt:0});
+    lineCoords.push(new google.maps.LatLng(lat, lng));
+
+    var lineCoordinatesPath = new google.maps.Polyline({
+      path: lineCoords,
+      geodesic: true,
+      strokeColor: '#2E10FF'
+    });
+
+    lineCoordinatesPath.setMap(map);
+    global_cycle++;
+  };
+
+  var pnChannel = "particle"; //this must match the publishing channel
+
+  //  var pubnub = new PubNub({
+  //    publishKey: 'pub-c-c15dfd3d-9760-4b00-81d2-cf4f143e43c9',
+  //    subscribeKey: 'sub-c-f67b89d4-b68a-11e7-b8f2-c6027b8a2e05'
+  //  });
+
+  var pubnub = new PubNub({
+    publishKey: 'pub-c-ca2ac9cc-ce64-433e-8024-5bf63969c407',
+    subscribeKey: 'sub-c-c64b6dd4-b666-11e7-a150-5e56acef67bd'
+  });
+
+  pubnub.subscribe({channels: [pnChannel]});
+  pubnub.addListener({message:redraw});
+
+  function getRandomNegPos()
+  {
+
+    return Math.random() >0.2 ? Math.random()/1000 : -Math.random()/1000;
+
+  }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyAFZn36TEd4dLvyB1uAV4gIjRMjVr6FOJM&callback=initialize"></script>
+<script
+        src="https://code.jquery.com/jquery-3.2.1.min.js"
+        integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+</body>
+</html>
